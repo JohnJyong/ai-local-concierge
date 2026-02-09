@@ -1,40 +1,18 @@
-# AI Local Concierge (随身 AI 地陪) 🗺️
 
-A Visual AI travel companion prototype that identifies landmarks/food/streets and tells you the *real* story, like a local friend.
+# V2.0 Architecture
 
-**Core Idea:**
-- **Input:** Photo from your camera.
-- **AI Processing:** Vision LLM + "Local Knowledge" Prompt.
-- **Output:** Identity + History/Gossip + "Tourist Trap vs Hidden Gem" verdict.
+This is a complete rewrite of the initial prototype.
 
-## 🚀 Quick Start
+## 📂 Structure
+- `backend/`: FastAPI Python server (Logic, LLM calls, TTS generation).
+- `mobile-app/`: (Placeholder) This will be the React Native (Expo) project.
 
-1. **Clone Repo**
-   ```bash
-   git clone https://github.com/JohnJyong/ai-local-concierge.git
-   cd ai-local-concierge
-   ```
+## 🚀 How to Run Backend
+1. `cd backend`
+2. `pip install -r requirements.txt`
+3. `uvicorn main:app --reload`
+4. Access docs at `http://localhost:8000/docs`
 
-2. **Setup Env**
-   ```bash
-   pip install -r requirements.txt
-   export OPENAI_API_KEY="sk-..."  # Or edit .env
-   ```
-
-3. **Run App**
-   ```bash
-   streamlit run app.py
-   ```
-
-## 📸 Demo Logic
-- Upload a photo (e.g., Eiffel Tower, street food).
-- Click "Ask Concierge".
-- Get a witty, localized story instead of a Wikipedia summary.
-
-## 🛠️ Tech Stack
-- Python 3.9+
-- Streamlit (Rapid UI)
-- OpenAI GPT-4o (Vision) / Google Gemini Pro Vision
-
----
-*Created by [Jyong](https://github.com/JohnJyong) with AI assistance.*
+## 📱 Mobile App (Coming Soon)
+- Use `npx create-expo-app mobile-app` to initialize inside `mobile-app/`.
+- Connect to backend API for AI features.
