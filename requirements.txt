@@ -3,3 +3,6 @@ requests
 Pillow
 python-dotenv
 openai
+streamlit-audiorecorder
+geopy
+streamlit-js-eval
