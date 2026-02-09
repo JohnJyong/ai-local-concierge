@@ -8,6 +8,7 @@ from io import BytesIO
 from PIL import Image
 import requests
 from dotenv import load_dotenv
+from typing import Optional
 
 load_dotenv()
 
@@ -34,6 +35,22 @@ Based on this location, identify the MOST interesting landmark, building, or his
 Provide a short, engaging audio script (in Chinese) about what they are looking at or should look at.
 Focus on: "Look to your left/right...", "Did you know that...", "This spot is famous for...".
 Don't just list facts. Be a storyteller.
+"""
+
+MENU_PROMPT = """
+You are a sophisticated 'Menu Master' (AI 点菜师). 
+Based on the restaurant name (or visual of menu/sign), and the user's constraints (people count, budget, taste), 
+recommend a PERFECT ordering strategy.
+
+Your Goal: Maximize the dining experience within the budget.
+Output Format (JSON-like structure in text):
+- **Restaurant Analysis:** "This is a [Cuisine Type] place known for [Specialty]."
+- **Recommended Menu:** List 3-5 dishes.
+  - Dish Name (Reason for picking it) - Est. Price
+- **Total Est. Price:**
+- **Local Tip:** (e.g., "Ask for less oil", "Their portions are huge").
+
+Language: Simplified Chinese.
 """
 
 # --- 🔑 CONFIG ---
@@ -83,9 +100,6 @@ async def analyze_location(loc: LocationRequest):
         data = response.json()
         guide_text = data["choices"][0]["message"]["content"]
         
-        # In a real app, we would generate audio here and return a URL to stream it
-        # audio_url = await generate_audio(guide_text)
-        
         return {
             "location": {"lat": loc.latitude, "lon": loc.longitude},
             "guide_text": guide_text,
@@ -129,6 +143,54 @@ async def analyze_photo(file: UploadFile = File(...)):
         return {"story": story}
     except Exception as e:
         return JSONResponse(content={"error": str(e)}, status_code=500)
+
+@app.post("/generate-menu")
+async def generate_menu(
+    people: int = Form(...),
+    budget: str = Form(...),
+    taste: str = Form(...),
+    file: Optional[UploadFile] = File(None)
+):
+    """
+    Generates a recommended menu based on constraints + optional photo (menu/sign).
+    """
+    if not OPENAI_API_KEY:
+        return JSONResponse(content={"error": "API Key missing"}, status_code=500)
+
+    messages = [{"role": "system", "content": MENU_PROMPT}]
+    
+    user_content = [
+        {"type": "text", "text": f"People: {people}, Budget: {budget}, Taste: {taste}. Recommend me a menu!"}
+    ]
+
+    if file:
+        contents = await file.read()
+        base64_image = encode_image(contents)
+        user_content.append(
+            {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{base64_image}"}}
+        )
+    
+    messages.append({"role": "user", "content": user_content})
+
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {OPENAI_API_KEY}"
+    }
+
+    payload = {
+        "model": MODEL,
+        "messages": messages,
+        "max_tokens": 600
+    }
+
+    try:
+        response = requests.post("https://api.openai.com/v1/chat/completions", headers=headers, json=payload)
+        data = response.json()
+        menu_recommendation = data["choices"][0]["message"]["content"]
+        return {"menu": menu_recommendation}
+    except Exception as e:
+        return JSONResponse(content={"error": str(e)}, status_code=500)
+
 
 # --- 🔊 TTS ENDPOINT (Streaming) ---
 @app.post("/tts")
